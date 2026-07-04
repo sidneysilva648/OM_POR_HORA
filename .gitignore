@@ -1,0 +1,75 @@
+# ============================================================
+# Cache Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ============================================================
+# Logs de execução (dados sensíveis / mudam a cada rodada)
+# ============================================================
+*.log
+execucoes.log
+execucoes_bv.log
+execucoes_pvh.log
+
+# ============================================================
+# Estado do dia (JSON regenerado toda parcial - não versionar)
+# ============================================================
+parciais_hoje.json
+parciais_hoje_bv.json
+parciais_hoje_pvh.json
+
+# ============================================================
+# Cards gerados (imagens temporárias - regeneradas a cada parcial)
+# ============================================================
+cards/*.jpg
+cards/*.png
+cards/*.jpeg
+cards/_*.html
+PVH-RBR-BV- AUTOMAÇÃO/cards/*.jpg
+PVH-RBR-BV- AUTOMAÇÃO/cards/*.png
+PVH-RBR-BV- AUTOMAÇÃO/cards/*.jpeg
+PVH-RBR-BV- AUTOMAÇÃO/cards/_*.html
+
+# ============================================================
+# Perfil Chrome do WhatsApp Web (contém sessão logada - JAMAIS versionar!)
+# ============================================================
+_chrome_whatsapp_profile/
+.whatsapp_om_profile/
+
+# ============================================================
+# HTML de diagnóstico / debug (temporário)
+# ============================================================
+diagnostico_pagina.html
+diagnostico_*.html
+erro_*.png
+erro_*.html
+
+# ============================================================
+# Backups do Excel
+# ============================================================
+*.bak.xlsx
+*.bak.xls
+~$*.xlsx
+~$*.xls
+
+# ============================================================
+# Arquivos do sistema operacional
+# ============================================================
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+
+# ============================================================
+# IDEs e editores
+# ============================================================
+.vscode/
+.idea/
+*.swp
+*.swo

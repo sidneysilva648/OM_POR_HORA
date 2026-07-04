@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Performance Operacional — Administrativo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root {
+  --azul-bemol: #1e57c4;
+  --azul-bemol-escuro: #0f3a8f;
+  --verde: #2ecc71;
+  --vermelho: #e74c3c;
+  --azul-claro: #3498db;
+  --laranja: #f39c12;
+  --rosa-meta: #e91e63;
+  --cinza-borda: #d5dbe3;
+  --cinza-texto: #5a6878;
+  --cinza-fundo: #f4f6f9;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: white;
+  color: #1d2939;
+}
+
+.dashboard {
+  width: 820px;
+  background: white;
+  padding: 22px 26px;
+  border-radius: 18px;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: #eaf3ff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  text-align: center;
+  position: relative;
+}
+.logo-img {
+  display: block;
+  margin: 0 auto 4px;
+  max-height: 52px;
+  width: auto;
+}
+.header h1 {
+  color: var(--azul-bemol);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+.header .data {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: right;
+  color: var(--cinza-texto);
+  font-size: 11px;
+}
+.header .data .atual {
+  display: block;
+  color: var(--azul-bemol);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ===== KPIs ===== */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.kpi {
+  border: 1.5px solid var(--cinza-borda);
+  border-radius: 14px;
+  padding: 14px 12px;
+  text-align: center;
+  background: white;
+}
+.kpi .icone {
+  display: inline-block;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  line-height: 28px;
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+.kpi .label { display: block; font-size: 12px; color: var(--cinza-texto); font-weight: 600; }
+.kpi .valor { display: block; font-size: 32px; font-weight: 800; color: #1d2939; margin: 2px 0; line-height: 1; }
+.kpi .extra { display: block; font-size: 10px; color: var(--cinza-texto); }
+.kpi.sucesso   .icone { background: var(--verde);     }
+.kpi.insucesso .icone { background: var(--vermelho);  }
+.kpi.iniciadas .icone { background: var(--azul-claro);}
+.kpi.meta      .icone { background: var(--rosa-meta); }
+
+/* ===== PROGRESSO DA META ===== */
+.progresso {
+  background: white;
+  border: 1.5px solid var(--cinza-borda);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.progresso .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.progresso .titulo-prog { font-size: 13px; color: var(--cinza-texto); font-weight: 700; letter-spacing: 0.5px; }
+.progresso .pct { color: var(--verde); font-size: 24px; font-weight: 800; }
+.progresso .barra {
+  height: 14px;
+  background: #eef3fc;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.progresso .barra .preenchido {
+  height: 100%;
+  background: linear-gradient(90deg, var(--verde) 0%, #5fd28d 100%);
+  border-radius: 8px;
+  transition: width 0.4s;
+}
+.progresso .rodape { display: flex; justify-content: space-between; font-size: 11px; color: var(--cinza-texto); }
+
+/* ===== GRÁFICO ===== */
+.bloco-grafico {
+  background: white;
+  border: 1.5px solid var(--cinza-borda);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  position: relative;            /* permite o meta-corner ficar absolute */
+}
+.bloco-grafico h3 {
+  font-size: 12px;
+  color: var(--azul-bemol);
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+/* Caixa "META" no canto superior direito do bloco */
+.meta-corner {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: white;
+  border: 1.5px solid var(--azul-bemol);
+  border-radius: 10px;
+  padding: 4px 14px 6px 14px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(30,87,196,0.12);
+  min-width: 72px;
+  overflow: hidden;
+}
+.meta-corner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--rosa-meta);
+}
+.meta-corner .label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #5a6878;
+  letter-spacing: 0.6px;
+  margin-top: 3px;
+}
+.meta-corner .valor {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--azul-bemol);
+  line-height: 1.1;
+}
+.bloco-grafico .legenda { font-size: 10px; color: var(--cinza-texto); margin-bottom: 6px; }
+.bloco-grafico .legenda .item { display: inline-block; margin-right: 14px; }
+.bloco-grafico .legenda .item::before { content: '●'; margin-right: 4px; }
+.bloco-grafico .legenda .verde::before    { color: var(--verde); }
+.bloco-grafico .legenda .vermelho::before { color: var(--vermelho); }
+.bloco-grafico .legenda .azul::before     { color: var(--azul-claro); }
+canvas#chartEvol { width: 100% !important; height: 220px !important; }
+
+/* ===== GRID INFERIOR ===== */
+.linha-baixo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.bloco {
+  border: 1.5px solid var(--cinza-borda);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.bloco h3 {
+  font-size: 11px;
+  color: var(--azul-bemol);
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+/* ===== TABELINHA DETALHAMENTO ===== */
+table.mini {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+table.mini th {
+  background: var(--cinza-fundo);
+  color: var(--azul-bemol);
+  font-weight: 700;
+  padding: 5px 3px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+table.mini td {
+  padding: 4px 3px;
+  text-align: center;
+  border-bottom: 1px solid #eef1f5;
+  color: #1d2939;
+}
+table.mini .hora { background: #f9fafc; font-weight: 600; }
+table.mini .diff.neg { color: var(--vermelho); font-weight: 700; }
+table.mini .diff.pos { color: var(--verde);    font-weight: 700; }
+table.mini .vazio { color: #c1c8d2; }
+
+/* ===== SEMÁFOROS ===== */
+.semaforos { display: grid; grid-template-rows: repeat(3, 1fr); gap: 8px; }
+.sem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--cinza-borda);
+  font-size: 11px;
+}
+.sem .label { color: var(--cinza-texto); font-weight: 600; }
+.sem .badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 10px;
+  color: white;
+  letter-spacing: 0.5px;
+}
+.sem.bom    .badge { background: var(--verde); }
+.sem.alerta .badge { background: var(--laranja); }
+.sem.ruim   .badge { background: var(--vermelho); }
+
+.rodape-pagina {
+  text-align: center;
+  font-size: 12px;
+  color: #475569;             /* cinza médio — bem legível, sem gritar */
+  font-weight: 600;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: #f4f6f9;        /* fundo levemente diferente, destaca */
+  border-radius: 10px;
+}
+.rodape-pagina .frase {
+  color: var(--azul-bemol-escuro);   /* azul forte na frase motivacional */
+}
+.rodape-pagina .proxima {
+  color: var(--azul-bemol);
+  font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<div class="dashboard" id="dash-root">
+
+  <div class="header">
+    <img class="logo-img" src="{{LOGO_BASE64}}" alt="Bemol">
+    <h1>PERFORMANCE OPERACIONAL</h1>
+    <div class="data">
+      <span id="data-extenso">{{DATA}}</span>
+      <span class="atual">Atualizado às <span id="hora-atual">{{HORA}}</span></span>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi sucesso">
+      <span class="icone">✓</span>
+      <span class="label">SUCESSO</span>
+      <span class="valor" id="kpi-sucesso">{{SUCESSO}}</span>
+    </div>
+    <div class="kpi insucesso">
+      <span class="icone">✕</span>
+      <span class="label">INSUCESSO</span>
+      <span class="valor" id="kpi-insucesso">{{INSUCESSO}}</span>
+    </div>
+    <div class="kpi iniciadas">
+      <span class="icone">▶</span>
+      <span class="label">INICIADAS</span>
+      <span class="valor" id="kpi-iniciadas">{{INICIADAS}}</span>
+    </div>
+    <div class="kpi meta">
+      <span class="icone">★</span>
+      <span class="label">META DO DIA</span>
+      <span class="valor" id="kpi-meta">{{META_DIA}}</span>
+    </div>
+  </div>
+
+  <!-- Progresso meta -->
+  <div class="progresso">
+    <div class="topo">
+      <span class="titulo-prog">PROGRESSO DA META</span>
+      <span class="pct" id="pct-meta">{{PCT_META}}%</span>
+    </div>
+    <div class="barra"><div class="preenchido" id="barra-meta" style="width: {{PCT_META}}%"></div></div>
+    <div class="rodape">
+      <span>Produzido: <strong id="prod-rodape">{{SUCESSO}}</strong></span>
+      <span>Meta: <strong id="meta-rodape">{{META_DIA}}</strong></span>
+    </div>
+  </div>
+
+  <!-- Gráfico de evolução -->
+  <div class="bloco-grafico">
+    <h3>EVOLUÇÃO AO LONGO DO DIA</h3>
+    <div class="legenda">
+      <span class="item verde">SUCESSO</span>
+      <span class="item vermelho">INSUCESSO</span>
+      <span class="item azul">INICIADAS</span>
+    </div>
+    <div class="meta-corner">
+      <span class="label">META</span>
+      <span class="valor">{{META_DIA}}</span>
+    </div>
+    <canvas id="chartEvol"></canvas>
+  </div>
+
+  <!-- Grid inferior: detalhamento + semáforos -->
+  <div class="linha-baixo">
+    <div class="bloco">
+      <h3>DETALHAMENTO POR HORÁRIO</h3>
+      <table class="mini">
+        <thead>
+          <tr>
+            <th>HORA</th><th>SUCESSO</th><th>INSUCESSO</th><th>INICIADAS</th><th>META</th><th>DIFERENÇA</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-mini"></tbody>
+      </table>
+    </div>
+    <div class="bloco">
+      <h3>INDICADORES</h3>
+      <div class="semaforos">
+        <div class="sem" id="sem-ritmo">
+          <span class="label">⏱ RITMO ATUAL<br><small>Comparado ao ritmo da meta</small></span>
+          <span class="badge">—</span>
+        </div>
+        <div class="sem" id="sem-meta">
+          <span class="label">🎯 META DO DIA<br><small id="meta-pct-sem">— %</small></span>
+          <span class="badge">—</span>
+        </div>
+        <div class="sem" id="sem-taxa">
+          <span class="label">✅ TAXA DE SUCESSO<br><small id="taxa-pct-sem">— %</small></span>
+          <span class="badge">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rodape-pagina">
+    <span class="frase">Foco, eficiência e constância geram resultados!</span>
+    &nbsp;•&nbsp; Próxima atualização: <span class="proxima" id="prox-atual">{{PROXIMA}}</span>
+  </div>
+
+</div>
+
+<script>
+// Dados injetados pelo Python (substituído antes do load)
+const DADOS = {{DADOS_JSON}};
+
+// ===== Tabela mini (detalhamento por horário) =====
+const tbodyMini = document.getElementById('tbody-mini');
+DADOS.parciais.forEach(p => {
+  const s = p.sucesso ?? null;
+  const ins = p.insucesso ?? null;
+  const ini = p.iniciadas ?? null;
+  const diff = s === null ? null : (s - p.meta);
+  const fmt = v => v === null ? '<span class="vazio">-</span>' : v;
+  const diffCls = diff === null ? '' : (diff < 0 ? 'neg' : (diff > 0 ? 'pos' : ''));
+  const diffTxt = diff === null ? '<span class="vazio">-</span>' : (diff > 0 ? '+' + diff : diff);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="hora">${p.hora}</td>
+                  <td>${fmt(s)}</td>
+                  <td>${fmt(ins)}</td>
+                  <td>${fmt(ini)}</td>
+                  <td>${p.meta}</td>
+                  <td class="diff ${diffCls}">${diffTxt}</td>`;
+  tbodyMini.appendChild(tr);
+});
+
+// ===== Gráfico de evolução =====
+const labels = DADOS.parciais.map(p => p.hora);
+const cores = { sucesso: '#2ecc71', insucesso: '#e74c3c', iniciadas: '#3498db' };
+const META_DIA = DADOS.parciais[DADOS.parciais.length - 1].meta;
+
+// Acha o índice da última parcial preenchida
+let lastIdx = -1;
+DADOS.parciais.forEach((p, i) => {
+  if (p.sucesso !== null && p.sucesso !== undefined) lastIdx = i;
+});
+
+// Para cada indicador, cria dois arrays:
+//  - REAL: valores preenchidos (resto = null) → linha sólida
+//  - PROJ: do último preenchido até o fim → linha tracejada
+//         (sucesso projeta linearmente até META; demais ficam flat)
+function dataProjetada(key) {
+  const valores = DADOS.parciais.map(p => p[key]);
+  const real = valores.map(v => (v === null || v === undefined ? null : v));
+
+  const proj = valores.map(() => null);
+  if (lastIdx >= 0 && lastIdx < valores.length - 1) {
+    proj[lastIdx] = valores[lastIdx];   // ponto de partida (= último real)
+    const totalPassos = (valores.length - 1) - lastIdx;
+    const alvo = (key === 'sucesso') ? META_DIA : valores[lastIdx];
+
+    for (let i = lastIdx + 1; i < valores.length; i++) {
+      const passo = i - lastIdx;
+      proj[i] = valores[lastIdx] + (alvo - valores[lastIdx]) * (passo / totalPassos);
+    }
+  }
+  return { real, proj };
+}
+
+const dsReal = (key, label, color) => ({
+  label: label + ' (real)',
+  data: dataProjetada(key).real,
+  borderColor: color,
+  backgroundColor: color + '20',
+  borderWidth: 3,
+  pointRadius: 5,
+  pointHoverRadius: 6,
+  pointBackgroundColor: color,
+  pointBorderColor: '#ffffff',
+  pointBorderWidth: 2,
+  tension: 0.18,
+  spanGaps: false,
+  datalabels: {
+    color: color,
+    anchor: 'end',
+    align: 'top',
+    offset: 6,
+    font: { weight: '700', size: 11 },
+    formatter: (v) => v === null ? '' : Math.round(v),
+  },
+});
+
+const dsProj = (key, color) => ({
+  label: key + ' (proj)',
+  data: dataProjetada(key).proj,
+  borderColor: color,
+  backgroundColor: 'transparent',
+  borderWidth: 2,
+  borderDash: [6, 5],
+  pointRadius: 0,
+  spanGaps: true,
+  tension: 0,
+  datalabels: { display: false },
+});
+
+// Plugin custom: marca o ponto da META com um círculo rosa no
+// gráfico (na posição 17:30 × valor da meta). A "etiqueta" META 385
+// é renderizada via HTML no canto superior do bloco (ver .meta-corner).
+const metaBoxPlugin = {
+  id: 'metaBoxPlugin',
+  afterDatasetsDraw(chart) {
+    const { ctx, scales: { x, y } } = chart;
+    const xPos = x.getPixelForValue(labels.length - 1);
+    const yPos = y.getPixelForValue(META_DIA);
+
+    // Pontinho rosa no ponto exato da META
+    ctx.fillStyle = '#e91e63';
+    ctx.beginPath();
+    ctx.arc(xPos, yPos, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+};
+
+new Chart(document.getElementById('chartEvol'), {
+  type: 'line',
+  plugins: [ChartDataLabels, metaBoxPlugin],
+  data: {
+    labels: labels,
+    datasets: [
+      dsReal('sucesso',   'Sucesso',   cores.sucesso),
+      dsProj('sucesso',                 cores.sucesso),
+      dsReal('insucesso', 'Insucesso', cores.insucesso),
+      dsProj('insucesso',               cores.insucesso),
+      dsReal('iniciadas', 'Iniciadas', cores.iniciadas),
+      dsProj('iniciadas',               cores.iniciadas),
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    layout: { padding: { top: 36, right: 18, bottom: 4, left: 4 } },
+    plugins: {
+      legend: { display: false },
+      datalabels: {},  // configurado por dataset
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: '#eef1f5', lineWidth: 1 },
+        ticks: { color: '#7e8a9a', font: { size: 11 } }
+      },
+      x: {
+        grid: {
+          display: true,
+          color: '#dde2eb',
+          lineWidth: 1,
+          drawTicks: true,
+          tickColor: '#bdc5d2',
+          tickLength: 6,
+        },
+        ticks: {
+          color: '#1e57c4',
+          font: { size: 11, weight: '600' },
+          padding: 4,
+        },
+        offset: false,
+        bounds: 'ticks',
+      }
+    }
+  }
+});
+
+// ===== Semáforos =====
+function setBadge(idSem, status, texto) {
+  const el = document.getElementById(idSem);
+  el.classList.remove('bom', 'alerta', 'ruim');
+  el.classList.add(status);
+  el.querySelector('.badge').textContent = texto;
+}
+
+const pctMeta = DADOS.kpi.pct_meta;
+const ritmo   = DADOS.kpi.ritmo;             // 'BOM'/'ATENÇÃO'/'ABAIXO'
+const taxa    = DADOS.kpi.taxa_sucesso_pct;  // %
+
+if (ritmo === 'BOM')      setBadge('sem-ritmo', 'bom', 'NO RITMO');
+else if (ritmo === 'ATENÇÃO') setBadge('sem-ritmo', 'alerta', 'ATENÇÃO');
+else setBadge('sem-ritmo', 'ruim', 'ABAIXO');
+
+if (pctMeta >= 90) setBadge('sem-meta', 'bom', 'NO ALVO');
+else if (pctMeta >= 50) setBadge('sem-meta', 'alerta', 'ABAIXO');
+else setBadge('sem-meta', 'ruim', 'ABAIXO');
+document.getElementById('meta-pct-sem').textContent = pctMeta + '% da meta';
+
+// TAXA DE SUCESSO agora mostra o MESMO valor do PROGRESSO DA META
+// (sucesso / meta_dia × 100), pra ficar consistente com o card de cima.
+if (pctMeta >= 90)      setBadge('sem-taxa', 'bom', 'BOM');
+else if (pctMeta >= 50) setBadge('sem-taxa', 'alerta', 'REGULAR');
+else                    setBadge('sem-taxa', 'ruim', 'BAIXO');
+document.getElementById('taxa-pct-sem').textContent = pctMeta + '% da meta';
+
+// Sinaliza que o JS terminou (Selenium espera isso)
+window.__dashReady = true;
+</script>
+</body>
+</html>
